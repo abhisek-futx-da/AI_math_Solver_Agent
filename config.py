@@ -3,9 +3,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def _get_secret(key: str, default: str = None):
+    """Read from Streamlit secrets (Cloud) first, then env vars / .env."""
+    try:
+        import streamlit as st
+        val = st.secrets.get(key)
+        if val:
+            return val
+    except Exception:
+        pass
+    return os.getenv(key, default)
+
 # OpenRouter (replaces Gemini for chat)
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+OPENROUTER_API_KEY = _get_secret("OPENROUTER_API_KEY")
+OPENROUTER_MODEL = _get_secret("OPENROUTER_MODEL", "google/gemini-2.5-flash")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 RAG_TOP_K = 5
