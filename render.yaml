@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: math-mentor-ai
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: oregon
+    plan: standard          # 2 GB RAM — needed for torch + easyocr + whisper
+    healthCheckPath: /
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false         # Set this manually in the Render dashboard (never commit secrets)
+      - key: OPENROUTER_MODEL
+        value: google/gemini-2.5-flash
