@@ -8,7 +8,7 @@ A JEE-style **Math Mentor** that accepts **image**, **audio**, or **text** input
 
 | Item | Link / status |
 |------|----------------|
-| **GitHub repository** | [Add your repo URL here after pushing] |
+| **GitHub repository** | https://github.com/abhisek-futx-da/AI_math_Solver_Agent |
 | **Live app** | [Add your deployed app URL here, e.g. Streamlit Cloud / Hugging Face] |
 | **Demo video (3–5 min)** | [Add link: image→solution, audio→solution, HITL, memory reuse] |
 | **Evaluation summary** | See [EVALUATION.md](EVALUATION.md) |
