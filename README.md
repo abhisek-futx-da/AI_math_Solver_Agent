@@ -9,11 +9,9 @@ A JEE-style **Math Mentor** that accepts **image**, **audio**, or **text** input
 | Item | Link / status |
 |------|----------------|
 | **GitHub repository** | https://github.com/abhisek-futx-da/AI_math_Solver_Agent |
-| **Live app** | [Add your deployed app URL here, e.g. Streamlit Cloud / Hugging Face] |
-| **Demo video (3–5 min)** | [Add link: image→solution, audio→solution, HITL, memory reuse] |
+| **Live app** | https://eppupbenuujfgekwjwgx8i.streamlit.app |
+| **Demo video (3–5 min)** | https://github.com/abhisek-futx-da/AI_math_Solver_Agent/releases/tag/v1.0.0 |
 | **Evaluation summary** | See [EVALUATION.md](EVALUATION.md) |
-
-**Before submitting**, fill in the links above (repo, live app, demo video).
 
 ### Pushing to GitHub
 
