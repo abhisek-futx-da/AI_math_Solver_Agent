@@ -10,7 +10,7 @@ A JEE-style **Math Mentor** that accepts **image**, **audio**, or **text** input
 |------|------|
 | **GitHub repository** | https://github.com/abhisek-futx-da/AI_math_Solver_Agent |
 | **Live app** | https://eppupbenuujfgekwjwgx8i.streamlit.app |
-| **Demo video (3–5 min)** | `demo_final.mp4` (in repo root — download and play) |
+| **Demo video (3–5 min)** | https://drive.google.com/file/d/1Cb3WnVGCWhxfLEGqjlKf3vEA7Dk_Ew6k/view?usp=sharing |
 | **Evaluation summary** | [EVALUATION.md](EVALUATION.md) |
 
 ---
