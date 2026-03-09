@@ -1,99 +1,78 @@
 # Math Mentor – Multimodal RAG + Agents + HITL + Memory
 
-A JEE-style **Math Mentor** that accepts **image**, **audio**, or **text** input, runs a **RAG pipeline** and **multi-agent system**, and supports **human-in-the-loop (HITL)** and **memory** for learning.
+A JEE-style **Math Mentor** that accepts **image**, **audio**, or **text** input and runs a multi-agent pipeline with **RAG**, **HITL**, and **memory**.
 
 ---
 
-## Deliverables (submission)
+## Deliverables
 
-| Item | Link / status |
-|------|----------------|
+| Item | Link |
+|------|------|
 | **GitHub repository** | https://github.com/abhisek-futx-da/AI_math_Solver_Agent |
 | **Live app** | https://eppupbenuujfgekwjwgx8i.streamlit.app |
-| **Demo video (3–5 min)** | https://github.com/abhisek-futx-da/AI_math_Solver_Agent/releases/tag/v1.0.0 |
-| **Evaluation summary** | See [EVALUATION.md](EVALUATION.md) |
-
-### Pushing to GitHub
-
-1. **Create a new repository** on [GitHub](https://github.com/new) (e.g. `math-mentor`). Do not add a README or .gitignore (this repo has them).
-
-2. **From your project folder** (ensure `.env` is not staged — it’s in `.gitignore`):
-   ```bash
-   git init
-   git add .
-   git status   # confirm .env and chroma_data/ do NOT appear
-   git commit -m "Initial commit: Math Mentor app"
-   git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
-   git push -u origin main
-   ```
-
-3. **Never commit** `.env` or any file with API keys. If you already committed `.env` by mistake, remove it from git (keep the file locally):  
-   `git rm --cached .env` then commit and push.
+| **Demo video (3–5 min)** | `demo_final.mp4` (in repo root — download and play) |
+| **Evaluation summary** | [EVALUATION.md](EVALUATION.md) |
 
 ---
 
 ## Features
 
-- **Multimodal input**: Type, upload image (OCR), or upload audio (ASR with Whisper)
-- **Guardrail Agent** *(bonus)*: Filters non-math or harmful inputs before processing
-- **Parser Agent**: Cleans input → structured problem (topic, variables, constraints); triggers HITL if ambiguous
-- **Intent Router**: Classifies problem (algebra, probability, calculus, linear algebra)
-- **Solver Agent**: Solves using RAG (ChromaDB + sentence-transformers embeddings) over a curated 12-doc math knowledge base
-- **Verifier Agent**: Checks correctness, domain, edge cases; suggests HITL if unsure
-- **Explainer Agent**: Step-by-step student-friendly explanation
-- **Memory**: Stores interactions and feedback; retrieves similar past problems for pattern reuse
-- **UI**: Streamlit – input mode, extraction preview, agent trace, retrieved context, answer, confidence, feedback (✅ correct / ❌ incorrect + comment / 🔁 request re-check HITL)
-- **HITL (all 4 triggers)**: Low OCR/ASR confidence, parser ambiguity, verifier uncertainty, explicit user re-check request
+- **Multimodal input**: Text typing, image upload (EasyOCR), audio upload (Whisper ASR)
+- **Guardrail Agent** *(bonus)*: Validates input is a math question before processing
+- **Parser Agent**: Cleans OCR/ASR output → structured problem (topic, variables, constraints, HITL flag)
+- **Intent Router Agent**: Classifies topic — algebra, probability, calculus, linear algebra
+- **Solver Agent**: Generates step-by-step solution using RAG context (ChromaDB + sentence-transformers) from a 12-doc knowledge base
+- **Verifier Agent**: Checks correctness, units/domain, edge cases; flags HITL if confidence is low
+- **Explainer Agent**: Produces student-friendly step-by-step explanation
+- **HITL (all 4 triggers)**:
+  1. OCR/ASR confidence is low → show extraction, let user edit before solving
+  2. Parser detects ambiguity (`needs_clarification`) → pipeline pauses, user must clarify
+  3. Verifier is not confident (`suggest_recheck`) → HITL flag in UI/sidebar
+  4. User explicitly clicks 🔁 **"Request Human Re-check"** button → flags + stores interaction
+- **Memory**: Every interaction stored (input, parsed, solution, verifier, feedback); similar past problems retrieved by embedding similarity for pattern reuse
+- **Feedback loop**: ✅ Correct / ❌ Incorrect + comment — stored for self-learning
 
-## Setup
+---
 
-1. **Clone and enter the repo**
-   ```bash
-   cd ai_planet
-   ```
+## Quick Start (local)
 
-2. **Create a virtual environment (recommended)**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate   # Windows: .venv\Scripts\activate
-   ```
+```bash
+# 1. Clone
+git clone https://github.com/abhisek-futx-da/AI_math_Solver_Agent.git
+cd AI_math_Solver_Agent
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+# 2. Install dependencies
+pip install -r requirements.txt
 
-4. **Set your OpenRouter API key**
-   - Copy `.env.example` to `.env`
-   - Edit `.env` and set:
-     ```
-     OPENROUTER_API_KEY=your_openrouter_api_key_here
-     ```
-   - Get a key from [OpenRouter](https://openrouter.ai/keys). Chat uses OpenRouter; embeddings use sentence-transformers (local, no key).
+# 3. Set API key
+cp .env.example .env
+# Edit .env → set OPENROUTER_API_KEY=sk-or-v1-...
 
-5. **Run the app**
-   ```bash
-   streamlit run app.py
-   ```
-   Open the URL shown (e.g. http://localhost:8501).
+# 4. Run
+streamlit run app.py
+```
 
-## Architecture (high level)
+Get an API key at [openrouter.ai/keys](https://openrouter.ai/keys) (free tier available). Embeddings use local sentence-transformers (no API key needed).
+
+---
+
+## Architecture
 
 ```mermaid
 flowchart LR
     subgraph Input
-        A[Text] --> M
-        B[Image - OCR] --> M
-        C[Audio - ASR] --> M
+        A[Text] --> G
+        B[Image - OCR] --> G
+        C[Audio - ASR] --> G
     end
-    M[Extracted / confirmed text] --> P[Parser Agent]
+    G[Guardrail Agent] --> M[Extracted text]
+    M --> P[Parser Agent]
     P --> HITL1{HITL?}
     HITL1 -->|needs_clarification| User[User edit / confirm]
     User --> P
     HITL1 -->|ok| R[Intent Router Agent]
     R --> S[Solver Agent]
-    KB[(Knowledge Base)] --> RAG[RAG - ChromaDB]
+    KB[(Knowledge Base\n12 docs)] --> RAG[RAG - ChromaDB]
     RAG --> S
     S --> V[Verifier Agent]
     V --> HITL2{HITL?}
@@ -104,41 +83,56 @@ flowchart LR
     Out --> Mem
 ```
 
-- **RAG**: Documents in `knowledge_base/` (12 curated .md files) are chunked, embedded with sentence-transformers, and stored in ChromaDB. The Solver retrieves top-k chunks and uses them in the prompt. Chat uses OpenRouter (one API key).
-- **HITL**: Triggered when (1) OCR/ASR confidence is low, (2) Parser sets `needs_clarification`, (3) Verifier sets `suggest_recheck`, or (4) User clicks the 🔁 "Request Human Re-check" button.
-- **Memory**: Each interaction (input, parsed, solution, verifier result, feedback) is stored. Similar past problems are retrieved (by embedding similarity) and shown for pattern reuse.
+**RAG**: 12 curated `.md` files in `knowledge_base/` (algebra, calculus, trigonometry, probability, linear algebra, integration, sequences/series, coordinate geometry, JEE strategies, solution templates, common mistakes, domain constraints). Chunked, embedded locally (sentence-transformers/all-MiniLM-L6-v2), indexed in ChromaDB. Solver retrieves top-k chunks; no hallucinated citations.
 
-## Project layout
+**Memory**: `memory/store.py` — stores each interaction. On the next solve, retrieves the top-3 most similar past problems by cosine similarity and shows them in the UI for pattern reuse. No model retraining.
 
-- `app.py` – Streamlit UI and pipeline orchestration
-- `config.py` – Config and env (e.g. `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `RAG_TOP_K`)
-- `llm_client.py` – OpenRouter for chat, sentence-transformers for embeddings
-- `rag_pipeline.py` – Chunk, embed, ChromaDB index, retrieve
-- `knowledge_base/` – 12 curated .md files (formulas, templates, pitfalls, JEE strategies)
-- `agents/` – Guardrail, Parser, Router, Solver, Verifier, Explainer (6 agents)
-- `input_handlers/` – OCR (EasyOCR), ASR (Whisper), text
-- `memory/` – Store interactions, retrieve similar
-- `.env.example` – Example env (copy to `.env`)
+---
 
-## Deployment (e.g. Streamlit Community Cloud)
+## Project Layout
 
-1. Push the repo to GitHub.
-2. Go to [share.streamlit.io](https://share.streamlit.io), connect the repo.
-3. Set **Secrets** (or env in your platform): `OPENROUTER_API_KEY = "your_key"`.
-4. Main file: `app.py`, command: `streamlit run app.py`.
-5. After deploy, add your **Live app** URL in the [Deliverables](#deliverables-submission) table above.
+```
+app.py                  # Streamlit UI + pipeline orchestration
+config.py               # Config (OPENROUTER_API_KEY, model, RAG_TOP_K)
+llm_client.py           # OpenRouter chat + sentence-transformers embeddings
+rag_pipeline.py         # Chunk, embed, ChromaDB index, retrieve
+agents/
+  guardrail_agent.py    # [bonus] Input validation
+  parser_agent.py       # Problem parsing + HITL flag
+  router_agent.py       # Intent routing
+  solver_agent.py       # Solution generation with RAG
+  verifier_agent.py     # Solution verification + HITL flag
+  explainer_agent.py    # Student-friendly explanation
+input_handlers/
+  image_handler.py      # EasyOCR image extraction
+  audio_handler.py      # Whisper ASR transcription
+  text_handler.py       # Text cleaning
+knowledge_base/         # 12 curated .md files
+memory/
+  store.py              # Persist + retrieve similar interactions
+.env.example            # API key template
+Dockerfile              # Docker build
+render.yaml             # Render deployment config
+packages.txt            # System packages for cloud deployment
+```
 
-Note: OCR (EasyOCR) and ASR (Whisper) need more memory/CPU on free tiers; for a minimal cloud demo you can disable image/audio and keep only text.
+---
 
-## Evaluation summary
+## Evaluation Summary
 
-See **[EVALUATION.md](EVALUATION.md)** for the full evaluation summary. In brief:
+Full detail in [EVALUATION.md](EVALUATION.md). Key points:
 
-- **RAG**: Curated KB (algebra, probability, calculus, linear algebra); retrieval in Solver; no hallucinated citations.
-- **Agents**: 5 agents (Parser, Intent Router, Solver, Verifier, Explainer).
-- **HITL**: On low OCR/ASR confidence, parser ambiguity, and verifier uncertainty.
-- **Memory**: Stored interactions and feedback; similar-problem retrieval for reuse.
+| Component | Status |
+|-----------|--------|
+| RAG pipeline (12 docs, ChromaDB, sentence-transformers) | ✅ |
+| 6 agents (incl. bonus Guardrail) | ✅ |
+| All 4 HITL triggers | ✅ |
+| Memory + self-learning (feedback loop) | ✅ |
+| Multimodal input (Text / Image / Audio) | ✅ |
+| Live deployment (Streamlit Cloud) | ✅ |
+
+---
 
 ## License
 
-MIT.
+MIT
