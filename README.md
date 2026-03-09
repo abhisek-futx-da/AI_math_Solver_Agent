@@ -38,13 +38,15 @@ A JEE-style **Math Mentor** that accepts **image**, **audio**, or **text** input
 ## Features
 
 - **Multimodal input**: Type, upload image (OCR), or upload audio (ASR with Whisper)
+- **Guardrail Agent** *(bonus)*: Filters non-math or harmful inputs before processing
 - **Parser Agent**: Cleans input → structured problem (topic, variables, constraints); triggers HITL if ambiguous
 - **Intent Router**: Classifies problem (algebra, probability, calculus, linear algebra)
-- **Solver Agent**: Solves using RAG (ChromaDB + sentence-transformers embeddings) over a curated math knowledge base
+- **Solver Agent**: Solves using RAG (ChromaDB + sentence-transformers embeddings) over a curated 12-doc math knowledge base
 - **Verifier Agent**: Checks correctness, domain, edge cases; suggests HITL if unsure
 - **Explainer Agent**: Step-by-step student-friendly explanation
 - **Memory**: Stores interactions and feedback; retrieves similar past problems for pattern reuse
-- **UI**: Streamlit – input mode, extraction preview, agent trace, retrieved context, answer, confidence, feedback (✅ correct / ❌ incorrect + comment)
+- **UI**: Streamlit – input mode, extraction preview, agent trace, retrieved context, answer, confidence, feedback (✅ correct / ❌ incorrect + comment / 🔁 request re-check HITL)
+- **HITL (all 4 triggers)**: Low OCR/ASR confidence, parser ambiguity, verifier uncertainty, explicit user re-check request
 
 ## Setup
 
@@ -104,8 +106,8 @@ flowchart LR
     Out --> Mem
 ```
 
-- **RAG**: Documents in `knowledge_base/` are chunked, embedded with sentence-transformers, and stored in ChromaDB. The Solver retrieves top-k chunks and uses them in the prompt. Chat uses OpenRouter (one API key).
-- **HITL**: Triggered when (1) OCR/ASR confidence is low, (2) Parser sets `needs_clarification`, or (3) Verifier sets `suggest_recheck`. User can edit input or confirm.
+- **RAG**: Documents in `knowledge_base/` (12 curated .md files) are chunked, embedded with sentence-transformers, and stored in ChromaDB. The Solver retrieves top-k chunks and uses them in the prompt. Chat uses OpenRouter (one API key).
+- **HITL**: Triggered when (1) OCR/ASR confidence is low, (2) Parser sets `needs_clarification`, (3) Verifier sets `suggest_recheck`, or (4) User clicks the 🔁 "Request Human Re-check" button.
 - **Memory**: Each interaction (input, parsed, solution, verifier result, feedback) is stored. Similar past problems are retrieved (by embedding similarity) and shown for pattern reuse.
 
 ## Project layout
@@ -114,8 +116,8 @@ flowchart LR
 - `config.py` – Config and env (e.g. `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `RAG_TOP_K`)
 - `llm_client.py` – OpenRouter for chat, sentence-transformers for embeddings
 - `rag_pipeline.py` – Chunk, embed, ChromaDB index, retrieve
-- `knowledge_base/` – Curated .md/.txt (formulas, templates, pitfalls)
-- `agents/` – Parser, Router, Solver, Verifier, Explainer
+- `knowledge_base/` – 12 curated .md files (formulas, templates, pitfalls, JEE strategies)
+- `agents/` – Guardrail, Parser, Router, Solver, Verifier, Explainer (6 agents)
 - `input_handlers/` – OCR (EasyOCR), ASR (Whisper), text
 - `memory/` – Store interactions, retrieve similar
 - `.env.example` – Example env (copy to `.env`)

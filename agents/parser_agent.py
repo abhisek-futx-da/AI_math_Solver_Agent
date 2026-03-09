@@ -9,8 +9,13 @@ Output ONLY a single JSON object (no markdown, no explanation) with exactly thes
 - "topic": one of "algebra", "probability", "calculus", "linear_algebra"
 - "variables": list of variable names mentioned (e.g. ["x", "n"])
 - "constraints": list of constraints (e.g. ["x > 0", "n positive integer"])
-- "needs_clarification": boolean (true only if information is missing or ambiguous and the problem cannot be solved without asking the user)
-If the problem is clear enough to attempt, set needs_clarification to false."""
+- "needs_clarification": boolean
+
+Rules for needs_clarification:
+- Set to FALSE for ANY of these — multi-part problems (a/b/c/d), problems with letters or symbols, integrals, derivatives, partial derivatives, equations, word problems.
+- Set to TRUE ONLY when a required numeric value or definition is completely missing AND the problem literally cannot be attempted without it (e.g. "find x" with no equation at all).
+- When in doubt, always set needs_clarification to FALSE and attempt to solve.
+- Having multiple sub-parts (a, b, c, d) is NOT ambiguity — it is a valid multi-part problem. ALWAYS set needs_clarification to false for multi-part problems."""
 
 def parse_problem(raw_input: str) -> dict:
     raw_input = (raw_input or "").strip()

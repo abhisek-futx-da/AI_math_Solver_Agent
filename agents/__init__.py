@@ -3,6 +3,7 @@ from .router_agent import IntentRouterAgent, route_intent
 from .solver_agent import SolverAgent, solve_problem
 from .verifier_agent import VerifierAgent, verify_solution
 from .explainer_agent import ExplainerAgent, explain_solution
+from .guardrail_agent import GuardrailAgent, check_input
 
 __all__ = [
     "ParserAgent", "parse_problem",
@@ -10,4 +11,5 @@ __all__ = [
     "SolverAgent", "solve_problem",
     "VerifierAgent", "verify_solution",
     "ExplainerAgent", "explain_solution",
+    "GuardrailAgent", "check_input",
 ]

@@ -67,7 +67,22 @@ def run_pipeline(user_text: str):
     from memory.store import memory_retrieve_similar, add_interaction
 
     st.session_state.agent_trace = []
+
+    # Guardrail Agent: block non-math or harmful inputs
+    from agents.guardrail_agent import check_input
+    guard = check_input(user_text)
+    trace("Guardrail Agent", f"is_valid={guard.get('is_valid')}, reason={guard.get('reason', '')}")
+    if not guard.get("is_valid", True):
+        st.session_state.hitl_triggered = False
+        return None, {"guardrail_reason": guard.get("reason", "Non-math input detected.")}, None, None, None, None
+
     parsed = parse_problem(user_text)
+    # Safety override: if the problem text is substantial, never block — LLMs sometimes
+    # incorrectly flag multi-part or symbolic problems as needing clarification.
+    problem_text = parsed.get("problem_text", "")
+    if parsed.get("needs_clarification") and len(problem_text.strip()) > 10:
+        parsed["needs_clarification"] = False
+
     trace("Parser Agent", f"Structured: topic={parsed.get('topic')}, needs_clarification={parsed.get('needs_clarification')}")
 
     if parsed.get("needs_clarification"):
@@ -193,6 +208,10 @@ def main():
             st.error(f"Pipeline error: {e}. (If 429: API quota exceeded; try again later or check your key.)")
             return
 
+        if result is None and parsed and parsed.get("guardrail_reason"):
+            st.error(f"🚫 Guardrail blocked: {parsed['guardrail_reason']} Please ask a math question.")
+            return
+
         if result is None and parsed and parsed.get("needs_clarification"):
             st.warning("The parser detected ambiguity. Please clarify or edit the problem text above and try again.")
             st.json(parsed)
@@ -246,7 +265,7 @@ def main():
             st.subheader("Feedback")
             fb_col1, fb_col2 = st.columns(2)
             with fb_col1:
-                if st.button("Correct"):
+                if st.button("✅ Correct", key="btn_correct"):
                     from memory.store import add_interaction
                     add_interaction(
                         user_text, result["parsed"], result.get("rag_context", []),
@@ -254,14 +273,26 @@ def main():
                     )
                     st.success("Thanks! Stored as correct.")
             with fb_col2:
-                comment = st.text_input("If incorrect, add a comment and submit below")
-                if st.button("Incorrect"):
+                comment = st.text_input("If incorrect, add a comment and submit below", key="incorrect_comment")
+                if st.button("❌ Incorrect", key="btn_incorrect"):
                     from memory.store import add_interaction
                     add_interaction(
                         user_text, result["parsed"], result.get("rag_context", []),
                         result["solution"], result["verifier"], feedback="incorrect", user_comment=comment
                     )
                     st.info("Thanks. Stored for learning.")
+
+            # HITL: explicit re-check trigger (4th HITL condition from assignment)
+            st.divider()
+            if st.button("🔁 Request Human Re-check (HITL)", key="btn_recheck", help="Flag this solution for manual review"):
+                st.session_state.hitl_triggered = True
+                from memory.store import add_interaction
+                add_interaction(
+                    user_text, result["parsed"], result.get("rag_context", []),
+                    result["solution"], result["verifier"], feedback="recheck_requested"
+                )
+                st.warning("⚠️ Solution flagged for human review and stored. Please verify manually.")
+                trace("HITL", "User explicitly requested human re-check")
 
     elif st.session_state.last_result:
         # Show last result again if no new solve
